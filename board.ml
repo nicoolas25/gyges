@@ -8,13 +8,6 @@ type cell =
     position : position option ;
   }
 
-type move =
-  {
-    move_piece : piece ;
-    move_from : cell ;
-    move_to : cell ;
-  }
-
 type t =
   {
     top : cell ;
@@ -23,6 +16,8 @@ type t =
     pieces : (position * piece) list ;
     matrix : cell array array ;
   }
+
+exception NoPieceFoundAt of position
 
 let empty =
   let rec top = { edges = [l0c0 ; l0c1 ; l0c2 ; l0c3 ; l0c4 ; l0c5] ; position = None }
@@ -111,6 +106,15 @@ let piece_on ~board ~position =
 
 let add ~board ~piece ~position =
   { board with pieces = (position, piece)::board.pieces }
+
+let move ~board ~piece ~start ~stop =
+  let rec replace found result = function
+    | [] -> if found then result else raise (NoPieceFoundAt start)
+    | p::rest when p = (start, piece) -> replace true ((stop, piece)::result) rest
+    | p::rest -> replace found (p::result) rest
+  in
+  let new_pieces = replace false [] board.pieces in
+  { board with pieces = new_pieces }
 
 let print ~board =
   let rec string_of_cell cell =
