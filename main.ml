@@ -1,6 +1,6 @@
 let () =
   let board = Board.empty
-  and piece = Board.PieceOne
+  and piece = Board.PieceTwo
   and position = Board.Matrix (0, 0)
   and target = Board.Matrix (5, 2) in
   let board = Board.add ~board ~piece ~position in
