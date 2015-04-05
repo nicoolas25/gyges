@@ -104,6 +104,9 @@ let piece_at ~board ~position =
   in
   scan_pieces board.pieces
 
+let is_empty ~board ~position =
+  None = (piece_at ~board ~position)
+
 let cell_at ~board ~position =
   match position with
     | Top -> board.top

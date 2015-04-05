@@ -1,7 +1,7 @@
 type exploration_step =
   {
     current : Board.cell ;
-    previous : Board.cell option ;
+    previous : Board.cell list ;
     remaining : int ;
   }
 
@@ -11,18 +11,21 @@ let range ~piece =
     | Board.PieceTwo -> 2
     | Board.PieceThree -> 3
 
-let stops ~from ~distance =
+let stops ~board ~from ~distance =
   let find_candidate_cells step =
     let is_previous cell =
       match step.previous with
-        | None -> false
-        | Some prev_cell -> Board.compare prev_cell cell
+        | [] -> false
+        | last_cell::_ -> Board.compare cell last_cell
     in
     let candidate_selector cell =
       if is_previous cell then false
-      else match cell.position with
-        | Top | Bot -> step.remaining = 1
-        | Matrix _ -> true
+      else
+        match cell.position, step.remaining with
+          | Top, 1 | Bot, 1 -> true
+          | Top, _ | Bot, _ -> false
+          | _, 1 -> true
+          | _, _ -> Board.is_empty ~board ~position:cell.position
     in
     List.filter candidate_selector step.current.edges
   in
@@ -32,12 +35,19 @@ let stops ~from ~distance =
       | step::rest ->
           begin
             match step.remaining with
-              | 0 -> walk (step.current::stops) rest
+              | 0 ->
+                  begin
+                    match Board.piece_at ~board ~position:step.current.position with
+                      | None -> walk (step.current::stops) rest
+                      | Some piece ->
+                          let jump = { step with remaining = (range ~piece) } in
+                          walk stops (jump::rest)
+                  end
               | n ->
                   let build_step cell =
                     {
                       current = cell ;
-                      previous = Some step.current ;
+                      previous = step.current::step.previous ;
                       remaining = n - 1 ;
                     }
                   in
@@ -49,7 +59,7 @@ let stops ~from ~distance =
   let initial_step =
     {
       current = from ;
-      previous = None ;
+      previous = [] ;
       remaining = distance ;
     }
   in
@@ -61,4 +71,4 @@ let possible_stops ~board ~start =
     | Some(piece) ->
         let cell = Board.cell_at ~board ~position:start in
         let distance = range ~piece in
-        stops ~from:cell ~distance
+        stops ~board ~from:cell ~distance
