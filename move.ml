@@ -18,8 +18,19 @@ let stops ~board ~from ~distance =
         | [] -> false
         | last_step::_ -> Board.compare cell last_step.current
     in
-    let is_loop _ =
-      false
+    let is_loop cell =
+      let prev = step.current
+      and remaining = step.remaining - 1 in
+      let is_loop_step past_step =
+        match past_step.history with
+          | [] -> false
+          | prev_past_step::_ ->
+              let same_cell = Board.compare cell past_step.current
+              and same_origin = Board.compare prev prev_past_step.current
+              and same_remaining = remaining = past_step.remaining in
+              same_cell && same_origin && same_remaining
+      in
+      List.exists is_loop_step step.history
     in
     let candidate_selector cell =
       if is_previous cell then false
