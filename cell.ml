@@ -16,6 +16,12 @@ let compare (cell_1:t) (cell_2:t) =
     | _, Top | Bot, _ -> -1
     | Matrix (i1, j1), Matrix (i2, j2) -> Pervasives.compare (i1, j1) (i2, j2)
 
+
+let string_of_position = function
+  | Top -> "Top"
+  | Bot -> "Bot"
+  | Matrix (i, j) -> Printf.sprintf "(%d, %d)" i j
+
 let empty_cells_and_matrix =
   let rec top = { edges = [l0c0 ; l0c1 ; l0c2 ; l0c3 ; l0c4 ; l0c5] ; position = Top }
 
