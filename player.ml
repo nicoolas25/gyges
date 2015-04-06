@@ -1,4 +1,4 @@
-type player = TopSide | BotSide
+type t = TopSide | BotSide
 
 let possible_positions ~(board:Board.t) ~player =
   let rec find_cells step = function

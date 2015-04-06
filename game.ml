@@ -35,7 +35,7 @@ module Make (S:State) = struct
   let start () =
     let board = S.empty_board
     and players = S.default_players in
-    let board = List.fold_right S.prepare board players in
+    let board = List.fold_left S.prepare board players in
     {
       board = board ;
       players = Array.of_list players ;
@@ -43,9 +43,9 @@ module Make (S:State) = struct
     }
 
   let change_player state =
-    let naive = state.current + 1 in
+    let naive = state.current_player_index + 1 in
     let index = if naive >= (Array.length state.players) then 0 else naive in
-    { state with current = index }
+    { state with current_player_index = index }
 
   let rec game_loop state =
     let current_player = state.players.(state.current_player_index) in
