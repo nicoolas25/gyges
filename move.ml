@@ -70,7 +70,7 @@ let stops ~board ~from ~distance =
       | step::rest when step.remaining = 0 ->
           begin
             match Board.piece_at ~board ~position:step.current.position with
-              | None -> walk (step.current::stops) rest
+              | None -> walk (CellSet.add step.current stops) rest
               | Some piece ->
                   let jump = { step with remaining = (range ~piece) } in
                   walk stops (jump::rest)
@@ -80,7 +80,7 @@ let stops ~board ~from ~distance =
           walk stops (next_steps @ rest)
   in
   let initial_step = { current = from ; history = [] ; remaining = distance } in
-  walk [] [initial_step]
+  walk CellSet.empty [initial_step]
 
 let possible_stops ~board ~start =
   match Board.piece_at ~board ~position:start with
@@ -88,4 +88,5 @@ let possible_stops ~board ~start =
     | Some(piece) ->
         let cell = Board.cell_at ~board ~position:start in
         let distance = range ~piece in
-        stops ~board ~from:cell ~distance
+        let cell_set = stops ~board ~from:cell ~distance in
+        CellSet.fold (fun cell l -> cell::l) cell_set []
