@@ -1,7 +1,7 @@
 type exploration_step =
   {
     current : Board.cell ;
-    previous : Board.cell list ;
+    history : exploration_step list ;
     remaining : int ;
   }
 
@@ -14,12 +14,16 @@ let range ~piece =
 let stops ~board ~from ~distance =
   let find_candidate_cells step =
     let is_previous cell =
-      match step.previous with
+      match step.history with
         | [] -> false
-        | last_cell::_ -> Board.compare cell last_cell
+        | last_step::_ -> Board.compare cell last_step.current
+    in
+    let is_loop _ =
+      false
     in
     let candidate_selector cell =
       if is_previous cell then false
+      else if is_loop cell then false
       else
         match cell.position, step.remaining with
           | Top, 1 | Bot, 1 -> true
@@ -47,7 +51,7 @@ let stops ~board ~from ~distance =
                   let build_step cell =
                     {
                       current = cell ;
-                      previous = step.current::step.previous ;
+                      history = step::step.history ;
                       remaining = n - 1 ;
                     }
                   in
@@ -59,7 +63,7 @@ let stops ~board ~from ~distance =
   let initial_step =
     {
       current = from ;
-      previous = [] ;
+      history = [] ;
       remaining = distance ;
     }
   in
