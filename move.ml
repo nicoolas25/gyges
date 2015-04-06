@@ -7,43 +7,61 @@ type exploration_step =
     remaining : int ;
   }
 
+let compare (step_1:exploration_step) (step_2:exploration_step) =
+  let cmp_1 = Cell.compare step_1.current step_2.current in
+  if cmp_1 = 0
+  then
+    let cmp_2 = Pervasives.compare step_1.remaining step_2.remaining in
+    if cmp_2 = 0
+    then
+      match step_1.history, step_2.history with
+        | [], [] -> 0
+        | [], _ -> -1
+        | _, [] -> 1
+        | p1::_, p2::_ -> Cell.compare p1.current p2.current
+    else cmp_2
+  else cmp_1
+
 let range ~piece =
   match piece with
     | Board.PieceOne -> 1
     | Board.PieceTwo -> 2
     | Board.PieceThree -> 3
 
-let find_next_cells ~board ~step =
-  let is_previous cell =
+let find_next_steps ~board ~step =
+  let is_uturn next_step =
     match step.history with
       | [] -> false
-      | last_step::_ -> Cell.equals cell last_step.current
+      | last_step::_ -> Cell.equals next_step.current last_step.current
+
+  and is_already_done next_step =
+    List.exists
+      (fun past_step -> (compare past_step next_step) = 0)
+      step.history
+
+  and is_fobidden next_step =
+    match next_step.current.position, next_step.remaining with
+      | Top, 0 | Bot, 0 -> false
+      | Top, _ | Bot, _ -> true
+      | _, 0 -> false
+      | p, _ -> not (Board.is_empty ~board ~position:p)
+
+  and all_next_steps =
+    List.map
+      (fun cell -> {
+        current = cell ;
+        history = (step::step.history) ;
+        remaining = step.remaining - 1 ;
+      })
+      step.current.edges
   in
-  let is_loop cell =
-    let prev = step.current
-    and remaining = step.remaining - 1 in
-    let is_loop_step past_step =
-      match past_step.history with
-        | [] -> false
-        | prev_past_step::_ ->
-            let same_cell = Cell.equals cell past_step.current
-            and same_origin = Cell.equals prev prev_past_step.current
-            and same_remaining = remaining = past_step.remaining in
-            same_cell && same_origin && same_remaining
-    in
-    List.exists is_loop_step step.history
-  in
-  let candidate_selector cell =
-    if is_previous cell then false
-    else if is_loop cell then false
-    else
-      match cell.position, step.remaining with
-        | Top, 1 | Bot, 1 -> true
-        | Top, _ | Bot, _ -> false
-        | _, 1 -> true
-        | _, _ -> Board.is_empty ~board ~position:cell.position
-  in
-  List.filter candidate_selector step.current.edges
+
+  List.filter
+    (fun next_step ->
+      not ((is_uturn next_step)
+        || (is_already_done next_step)
+        || (is_fobidden next_step)))
+    all_next_steps
 
 let stops ~board ~from ~distance =
   let rec walk stops explorable =
@@ -52,31 +70,16 @@ let stops ~board ~from ~distance =
       | step::rest when step.remaining = 0 ->
           begin
             match Board.piece_at ~board ~position:step.current.position with
-              | None ->
-                  walk (step.current::stops) rest
+              | None -> walk (step.current::stops) rest
               | Some piece ->
                   let jump = { step with remaining = (range ~piece) } in
                   walk stops (jump::rest)
           end
       | step::rest ->
-          let build_step cell =
-            {
-              current = cell ;
-              history = step::step.history ;
-              remaining = step.remaining - 1 ;
-            }
-          in
-          let candidate_cells = find_next_cells ~board ~step in
-          let neighbors = List.map build_step candidate_cells in
-          walk stops (neighbors @ rest)
+          let next_steps = find_next_steps ~board ~step in
+          walk stops (next_steps @ rest)
   in
-  let initial_step =
-    {
-      current = from ;
-      history = [] ;
-      remaining = distance ;
-    }
-  in
+  let initial_step = { current = from ; history = [] ; remaining = distance } in
   walk [] [initial_step]
 
 let possible_stops ~board ~start =
