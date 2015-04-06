@@ -1,6 +1,8 @@
+module CellSet = Set.Make(Cell)
+
 type exploration_step =
   {
-    current : Board.cell ;
+    current : Cell.t ;
     history : exploration_step list ;
     remaining : int ;
   }
@@ -15,7 +17,7 @@ let find_next_cells ~board ~step =
   let is_previous cell =
     match step.history with
       | [] -> false
-      | last_step::_ -> Board.compare cell last_step.current
+      | last_step::_ -> Cell.equals cell last_step.current
   in
   let is_loop cell =
     let prev = step.current
@@ -24,8 +26,8 @@ let find_next_cells ~board ~step =
       match past_step.history with
         | [] -> false
         | prev_past_step::_ ->
-            let same_cell = Board.compare cell past_step.current
-            and same_origin = Board.compare prev prev_past_step.current
+            let same_cell = Cell.equals cell past_step.current
+            and same_origin = Cell.equals prev prev_past_step.current
             and same_remaining = remaining = past_step.remaining in
             same_cell && same_origin && same_remaining
     in
