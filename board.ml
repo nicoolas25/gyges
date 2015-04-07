@@ -50,6 +50,12 @@ let move ~board ~piece ~start ~stop =
   let new_pieces = replace false [] board.pieces in
   { board with pieces = new_pieces }
 
+let string_of_piece ~piece =
+  match piece with
+    | PieceOne -> "1"
+    | PieceTwo -> "2"
+    | PieceThree -> "3"
+
 let print ~board ~highlight =
   let rec string_of_cell cell =
     if List.exists (Cell.equals cell) highlight then "_"
@@ -59,9 +65,7 @@ let print ~board ~highlight =
           begin
             match (piece_at ~board ~position) with
               | None -> "O"
-              | Some(PieceOne) -> "1"
-              | Some(PieceTwo) -> "2"
-              | Some(PieceThree) -> "3"
+              | Some(piece) -> string_of_piece ~piece
           end
   and string_of_cell_line line =
     let cell_list = Array.to_list line in

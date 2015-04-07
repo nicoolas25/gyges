@@ -7,7 +7,22 @@ module Gyges = Game.Make(struct
 
   let default_players = [ Player.TopSide ; Player.BotSide ]
 
-  let prepare board _ = board
+  let prepare board player =
+    let pieces = Player.pieces_to_add ~board ~player in
+    let place_piece board piece =
+      let rec read_position () =
+        Printf.printf "Select cell of %s, type for instance: '0,1'\n" (Board.string_of_piece ~piece) ;
+        let str = read_line () in
+        match Core.Std.String.split ~on:',' str with
+          | i::j::[] -> Cell.Matrix (int_of_string i, int_of_string j)
+          | _ -> read_position ()
+      in
+      Printf.printf "\x1B[2J\x1B[0;0fYou are the %s player\n" (Player.string_of_player ~player) ;
+      Board.print ~board ~highlight:[] ;
+      let position = read_position () in
+      Board.add ~board ~piece ~position
+    in
+    List.fold_left place_piece board pieces
 
   let moves board player =
     let starts = Player.possible_positions ~board ~player in
@@ -21,10 +36,11 @@ module Gyges = Game.Make(struct
       | None -> raise (Board.NoPieceFoundAt start)
       | Some piece -> Board.move ~board ~piece ~start ~stop
 
-  let read_move board _ _ =
+  let read_move board player _ =
+    Printf.printf "\x2B[2J\x1B[0;0fYou are the %s player\n" (Player.string_of_player ~player) ;
     Board.print ~board ~highlight:[] ;
     let rec read_start () =
-      print_endline "Select start cell, type for instance: '0,1'" ;
+      Printf.printf "Select start cell, type for instance: '0,1'\n" ;
       let str = read_line () in
       match Core.Std.String.split ~on:',' str with
         | i::j::[] -> Cell.Matrix (int_of_string i, int_of_string j)
