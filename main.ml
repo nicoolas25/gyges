@@ -36,6 +36,12 @@ module Gyges = Game.Make(struct
       let pairs = List.map (fun (cell:Cell.t) -> (start, cell.position)) cells in
       pairs @ acc)
 
+  let is_winning player (_, stop) =
+    match player, stop with
+      | (Player.TopSide, Cell.Bot) -> true
+      | (Player.BotSide, Cell.Top) -> true
+      | _ -> false
+
   let play board (start, stop) =
     match Board.piece_at ~board ~position:start with
       | None -> raise (Board.NoPieceFoundAt start)

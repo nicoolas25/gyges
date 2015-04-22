@@ -18,6 +18,9 @@ module type State = sig
    * can do on the given board. *)
   val moves : board -> player -> move list
 
+  (* Tells if a move is a winning one. *)
+  val is_winning : player -> move -> bool
+
   (* This function should apply a move on a board and return the resulting
    * board. It should be purely functionnal. *)
   val play : board -> move -> board
@@ -50,13 +53,23 @@ module Make (S:State) = struct
     let index = if naive >= (Array.length state.players) then 0 else naive in
     { state with current_player_index = index }
 
+  let random_elt elements =
+    List.nth elements (Random.int (List.length elements))
+
+  let select_best_move state player =
+    let possible_moves = S.moves state.board player in
+    match List.find_all (S.is_winning player) possible_moves with
+      | move::_ -> move
+      | [] -> random_elt possible_moves
+
   let rec game_loop state =
     let current_player = state.players.(state.current_player_index) in
-    let possible_moves = S.moves state.board current_player in
     let move =
-      if List.mem current_player S.human_players
-      then S.read_move state.board current_player possible_moves
-      else List.hd possible_moves
+      if List.mem current_player S.human_players then
+        let possible_moves = S.moves state.board current_player in
+        S.read_move state.board current_player possible_moves
+      else
+        select_best_move state current_player
     in
     let next_board = S.play state.board move in
     let next_state = change_player state in
