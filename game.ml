@@ -28,6 +28,9 @@ module type State = sig
   (* This function is called for human players only in order to select a move.
    * In order to help, the list of valid move is given too. *)
   val read_move : board -> player -> move list -> move
+
+  (* This function is called after a move is played. *)
+  val announce_move : player -> move -> unit
 end
 
 module Make (S:State) = struct
@@ -72,6 +75,7 @@ module Make (S:State) = struct
         select_best_move state current_player
     in
     let next_board = S.play state.board move in
+    let () = S.announce_move current_player move in
     let next_state = change_player state in
     game_loop { next_state with board = next_board }
 

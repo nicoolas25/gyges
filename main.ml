@@ -22,7 +22,7 @@ module Gyges = Game.Make(struct
         if Board.is_empty ~board ~position then position
         else read_position ()
       in
-      Printf.printf "\x1B[2J\x1B[0;0fYou are the %s player\n" (Player.string_of_player ~player) ;
+      Printf.printf "You are the %s player\n" (Player.string_of_player ~player) ;
       Board.print ~board ~highlight:[] ;
       let position = read_position () in
       Board.add ~board ~piece ~position
@@ -48,7 +48,7 @@ module Gyges = Game.Make(struct
       | Some piece -> Board.move ~board ~piece ~start ~stop
 
   let read_move board player possible_moves =
-    Printf.printf "\x2B[2J\x1B[0;0fYou are the %s player\n" (Player.string_of_player ~player) ;
+    Printf.printf "You are the %s player\n" (Player.string_of_player ~player) ;
     Board.print ~board ~highlight:[] ;
     let rec read_start () =
       Printf.printf "Select start cell, type for instance: '0,1'\n" ;
@@ -73,6 +73,12 @@ module Gyges = Game.Make(struct
       else select_move ()
     in
     select_move ()
+
+  let announce_move player (start, stop) =
+    Printf.printf "Player %s just played: %s -> %s\n"
+      (Player.string_of_player ~player)
+      (Cell.string_of_position start)
+      (Cell.string_of_position stop)
 
 end)
 
