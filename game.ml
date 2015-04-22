@@ -7,8 +7,11 @@ module type State = sig
 
   val default_players : player list
 
+  val human_players : player list
+
   (* This function will be called for each player before the game begins.
-   * The resulting board will be used after that. *)
+   * The resulting board will be used after that. Even non human player
+   * are passed to this function. *)
   val prepare : board -> player -> board
 
   (* This function should return a list of valid moves that the given player
@@ -49,8 +52,12 @@ module Make (S:State) = struct
 
   let rec game_loop state =
     let current_player = state.players.(state.current_player_index) in
-    let moves = S.moves state.board current_player in
-    let move = S.read_move state.board current_player moves in
+    let possible_moves = S.moves state.board current_player in
+    let move =
+      if List.mem current_player S.human_players
+      then S.read_move state.board current_player possible_moves
+      else List.hd possible_moves
+    in
     let next_board = S.play state.board move in
     let next_state = change_player state in
     game_loop { next_state with board = next_board }

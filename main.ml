@@ -7,6 +7,8 @@ module Gyges = Game.Make(struct
 
   let default_players = [ Player.TopSide ; Player.BotSide ]
 
+  let human_players = [ Player.TopSide ]
+
   let prepare board player =
     let pieces = Player.pieces_to_add ~board ~player in
     let place_piece board piece =
