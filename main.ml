@@ -11,11 +11,14 @@ module Gyges = Game.Make(struct
     let pieces = Player.pieces_to_add ~board ~player in
     let place_piece board piece =
       let rec read_position () =
-        Printf.printf "Select cell of %s, type for instance: '0,1'\n" (Board.string_of_piece ~piece) ;
-        let str = read_line () in
-        match Core.Std.String.split ~on:',' str with
-          | i::j::[] -> Cell.Matrix (int_of_string i, int_of_string j)
-          | _ -> read_position ()
+        Printf.printf "Select column of %s ([0-5])\n" (Board.string_of_piece ~piece) ;
+        let col = read_int () in
+        let position = match player with
+          | Player.TopSide -> Cell.Matrix (0, col)
+          | Player.BotSide -> Cell.Matrix (5, col)
+        in
+        if Board.is_empty ~board ~position then position
+        else read_position ()
       in
       Printf.printf "\x1B[2J\x1B[0;0fYou are the %s player\n" (Player.string_of_player ~player) ;
       Board.print ~board ~highlight:[] ;
