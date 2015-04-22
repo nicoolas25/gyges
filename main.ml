@@ -36,7 +36,7 @@ module Gyges = Game.Make(struct
       | None -> raise (Board.NoPieceFoundAt start)
       | Some piece -> Board.move ~board ~piece ~start ~stop
 
-  let read_move board player _ =
+  let read_move board player possible_moves =
     Printf.printf "\x2B[2J\x1B[0;0fYou are the %s player\n" (Player.string_of_player ~player) ;
     Board.print ~board ~highlight:[] ;
     let rec read_start () =
@@ -54,9 +54,14 @@ module Gyges = Game.Make(struct
         | i::j::[] -> Cell.Matrix (int_of_string i, int_of_string j)
         | _ -> read_stop()
     in
-    let start = read_start () in
-    let stop = read_stop () in
-    (start, stop)
+    let rec select_move () =
+      let start = read_start () in
+      let stop = read_stop () in
+      let move = (start, stop) in
+      if List.mem move possible_moves then move
+      else select_move ()
+    in
+    select_move ()
 
 end)
 
