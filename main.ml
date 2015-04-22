@@ -32,7 +32,7 @@ module Gyges = Game.Make(struct
   let moves board player =
     let starts = Player.possible_positions ~board ~player in
     ListLabels.fold_left starts ~init:[] ~f:(fun acc start ->
-      let cells = Move.possible_stops ~board ~start in
+      let cells = Move.possible_stops ~board ~player ~start in
       let pairs = List.map (fun (cell:Cell.t) -> (start, cell.position)) cells in
       pairs @ acc)
 

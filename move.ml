@@ -28,7 +28,7 @@ let range ~piece =
     | Board.PieceTwo -> 2
     | Board.PieceThree -> 3
 
-let find_next_steps ~board ~step =
+let find_next_steps ~board ~player ~step =
   let is_uturn next_step =
     match step.history with
       | [] -> false
@@ -40,11 +40,13 @@ let find_next_steps ~board ~step =
       step.history
 
   and is_fobidden next_step =
-    match next_step.current.position, next_step.remaining with
-      | Top, 0 | Bot, 0 -> false
-      | Top, _ | Bot, _ -> true
-      | _, 0 -> false
-      | p, _ -> not (Board.is_empty ~board ~position:p)
+    match next_step.current.position, next_step.remaining, player with
+      | Top, 0, Player.BotSide -> false
+      | Bot, 0, Player.TopSide -> false
+      | Top, _, _ -> true
+      | Bot, _, _ -> true
+      | _, 0, _ -> false
+      | p, _, _ -> not (Board.is_empty ~board ~position:p)
 
   and all_next_steps =
     List.map
@@ -63,7 +65,7 @@ let find_next_steps ~board ~step =
         || (is_fobidden next_step)))
     all_next_steps
 
-let stops ~board ~from ~distance =
+let stops ~board ~player ~from ~distance =
   let rec walk stops explorable =
     match explorable with
       | [] -> stops
@@ -76,17 +78,17 @@ let stops ~board ~from ~distance =
                   walk stops (jump::rest)
           end
       | step::rest ->
-          let next_steps = find_next_steps ~board ~step in
+          let next_steps = find_next_steps ~board ~player ~step in
           walk stops (next_steps @ rest)
   in
   let initial_step = { current = from ; history = [] ; remaining = distance } in
   walk CellSet.empty [initial_step]
 
-let possible_stops ~board ~start =
+let possible_stops ~board ~player ~start =
   match Board.piece_at ~board ~position:start with
     | None -> []
     | Some(piece) ->
         let cell = Board.cell_at ~board ~position:start in
         let distance = range ~piece in
-        let cell_set = stops ~board ~from:cell ~distance in
+        let cell_set = stops ~board ~player ~from:cell ~distance in
         CellSet.fold (fun cell l -> cell::l) cell_set []
