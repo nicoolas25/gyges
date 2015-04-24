@@ -100,7 +100,7 @@ module Make (S:State) = struct
         let possible_moves = S.moves state.board current_player in
         S.read_move state.board current_player possible_moves
       else
-        best_move state 0
+        best_move state 1
     in
     let next_board = S.play state.board move in
     let () = S.announce_move current_player move in
