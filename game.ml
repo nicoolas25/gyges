@@ -33,7 +33,7 @@ module type State = sig
   val announce_move : player -> move -> unit
 
   (* This function is called after the game is won. *)
-  val announce_endgame : player -> unit
+  val announce_endgame : board -> player -> unit
 end
 
 module Make (S:State) = struct
@@ -105,7 +105,7 @@ module Make (S:State) = struct
     let next_board = S.play state.board move in
     let () = S.announce_move current_player move in
     if S.is_winning current_player move then
-      S.announce_endgame current_player
+      S.announce_endgame next_board current_player
     else
       let next_state = change_player state in
       game_loop { next_state with board = next_board }
