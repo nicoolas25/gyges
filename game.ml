@@ -59,14 +59,39 @@ module Make (S:State) = struct
     let index = if naive >= (Array.length state.players) then 0 else naive in
     { state with current_player_index = index }
 
-  let random_elt elements =
-    List.nth elements (Random.int (List.length elements))
-
-  let select_best_move state player =
-    let possible_moves = S.moves state.board player in
-    match List.find_all (S.is_winning player) possible_moves with
-      | move::_ -> move
-      | [] -> random_elt possible_moves
+  let rec best_move =
+    let next_moves state =
+      let player = state.players.(state.current_player_index) in
+      List.map (fun move -> (player, move)) (S.moves state.board player)
+    in
+    let rec find_winning_move moves =
+      match moves with
+        | [] -> None
+        | (player, move)::rest ->
+            if S.is_winning player move then Some move
+            else find_winning_move rest
+    in
+    let apply state (_, move) =
+      { (change_player state) with board = (S.play state.board move) }
+    in
+    let random_move moves =
+      let _, move = List.nth moves (Random.int (List.length moves)) in
+      move
+    in
+    (fun state depth ->
+      let possible_moves = next_moves state in
+      match find_winning_move possible_moves with
+        | Some move -> move
+        | None when depth = 0 -> random_move possible_moves
+        | None ->
+            let candidates = ListLabels.filter possible_moves ~f:(fun move ->
+              let next_state = apply state move in
+              let opponent = next_state.players.(next_state.current_player_index) in
+              let opponent_move = best_move next_state (depth - 1) in
+              not (S.is_winning opponent opponent_move))
+            in
+            random_move (match candidates with [] -> possible_moves | _ -> candidates)
+    )
 
   let rec game_loop state =
     let current_player = state.players.(state.current_player_index) in
@@ -75,7 +100,7 @@ module Make (S:State) = struct
         let possible_moves = S.moves state.board current_player in
         S.read_move state.board current_player possible_moves
       else
-        select_best_move state current_player
+        best_move state 0
     in
     let next_board = S.play state.board move in
     let () = S.announce_move current_player move in
