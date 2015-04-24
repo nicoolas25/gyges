@@ -80,6 +80,9 @@ module Gyges = Game.Make(struct
       (Cell.string_of_position start)
       (Cell.string_of_position stop)
 
+  let announce_endgame player =
+    Printf.printf "Player %s just won!\n" (Player.string_of_player ~player)
+
 end)
 
 let () =
